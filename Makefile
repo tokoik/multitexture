@@ -1,6 +1,6 @@
 CXXFLAGS	= -I/usr/X11R6/include -DX11 -Wall
 LDLIBS	= -L/usr/X11R6/lib -lglut -lGLU -lGL -lm
-OBJECTS	= $(patsubst %.cpp,%.o,$(wildcard *.cpp))
+OBJECTS	= $(patsubst %.c,%.o,$(wildcard *.c))
 TARGET	= multitexture
 
 .PHONY: clean depend
@@ -12,6 +12,6 @@ clean:
 	-$(RM) $(TARGET) *.o *~ .*~ core
 
 depend:
-	$(CXX) $(CXXFLAGS) -MM *.cpp > $(TARGET).d
+	$(CXX) $(CXXFLAGS) -MM *.c > $(TARGET).d
 
 -include $(wildcard *.d)
