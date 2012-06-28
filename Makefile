@@ -12,6 +12,6 @@ clean:
 	-$(RM) $(TARGET) *.o *~ .*~ core
 
 depend:
-	$(CXX) $(CXXFLAGS) -MM *.c > $(TARGET).d
+	$(CXX) $(CXXFLAGS) -MM *.c > $(TARGET).dep
 
--include $(wildcard *.d)
+-include $(wildcard *.dep)
