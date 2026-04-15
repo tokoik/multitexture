@@ -1,10 +1,27 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
-#ifdef WIN32
+
+#ifdef _MSC_VER
 #  undef GL_GLEXT_PROTOTYPES
 #  include "glut.h"
 #  include "glext.h"
-#  include "initmultitexture.h"
+
+/*
+** GL_ARB_multitexture 用の関数ポインタ
+*/
+PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
+
+int initMultiTexture(void) {
+  glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
+  if (!glActiveTextureARB) return 0;
+
+  glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)wglGetProcAddress("glMultiTexCoord2fARB");
+  if (!glMultiTexCoord2fARB) return 0;
+
+  return 1;
+}
+
 #elif defined(__APPLE__) || defined(MACOSX)
 #  include <GLUT/glut.h>
 #  include <OpenGL/glext.h>
@@ -13,7 +30,7 @@
 #  include <GL/glext.h>
 #endif
 
-#define TEXWIDTH  256
+#define TEXWIDTH 256
 #define TEXHEIGHT 256
 
 static char texFile0[] = "texture0.raw";
@@ -21,8 +38,7 @@ static char texFile1[] = "texture1.raw";
 
 static GLuint texName0, texName1;
 
-void display(void)
-{
+void display(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glLoadIdentity();
@@ -48,13 +64,13 @@ void display(void)
   glVertex3d(-1.0, -1.0, 0.0);
   glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 1.0, 1.0);
   glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1.0, 1.0);
-  glVertex3d( 1.0, -1.0, 0.0);
+  glVertex3d(1.0, -1.0, 0.0);
   glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 1.0, 0.0);
   glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1.0, 0.0);
-  glVertex3d( 1.0,  1.0, 0.0);
+  glVertex3d(1.0, 1.0, 0.0);
   glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 0.0, 0.0);
   glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0.0, 0.0);
-  glVertex3d(-1.0,  1.0, 0.0);
+  glVertex3d(-1.0, 1.0, 0.0);
   glEnd();
 
   /* テクスチャ１を結合解除する */
@@ -65,12 +81,11 @@ void display(void)
   glActiveTextureARB(GL_TEXTURE0_ARB);
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
-  
+
   glFlush();
 }
 
-void resize(int w, int h)
-{
+void resize(int w, int h) {
   /* ウィンドウ全体をビューポートにする */
   glViewport(0, 0, w, h);
 
@@ -85,8 +100,7 @@ void resize(int w, int h)
   glMatrixMode(GL_MODELVIEW);
 }
 
-void keyboard(unsigned char key, int x, int y)
-{
+void keyboard(unsigned char key, int x, int y) {
   switch (key) {
   case '\33':
   case 'q':
@@ -97,15 +111,14 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
-void init(void)
-{
+void init(void) {
   FILE *fp;
-  unsigned char texImage[TEXWIDTH * TEXHEIGHT][3];
+  static unsigned char texImage[TEXWIDTH * TEXHEIGHT][3];
 
-#ifdef WIN32
+#ifdef _MSC_VER
   /* GL_ARB_multitexture 用の関数ポインタの初期化 */
   if (!initMultiTexture()) {
-    fprintf(stderr, "GL_ARB_multitexture が使用できません¥n");
+    fprintf(stderr, "GL_ARB_multitexture が使用できません\n");
     exit(1);
   }
 #endif
@@ -127,7 +140,8 @@ void init(void)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEXWIDTH, TEXHEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, texImage);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEXWIDTH, TEXHEIGHT, 0, GL_RGB,
+    GL_UNSIGNED_BYTE, texImage);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   /* テクスチャ２の読み込み */
@@ -144,7 +158,8 @@ void init(void)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEXWIDTH, TEXHEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, texImage);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEXWIDTH, TEXHEIGHT, 0, GL_RGB,
+    GL_UNSIGNED_BYTE, texImage);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   /* OpenGL の初期設定 */
@@ -155,8 +170,7 @@ void init(void)
   glEnable(GL_LIGHT0);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
   glutCreateWindow(argv[0]);
