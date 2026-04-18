@@ -22,12 +22,16 @@ int initMultiTexture(void) {
   return 1;
 }
 
-#elif defined(__APPLE__) || defined(MACOSX)
-#  include <GLUT/glut.h>
-#  include <OpenGL/glext.h>
 #else
-#  include <GL/glut.h>
-#  include <GL/glext.h>
+#  if defined(__APPLE__) || defined(MACOSX)
+#    include <GLUT/glut.h>
+#    include <OpenGL/glext.h>
+#  else
+#    include <GL/glut.h>
+#    include <GL/glext.h>
+#  endif
+#  define glActiveTextureARB glActiveTexture
+#  define glMultiTexCoord2fARB glMultiTexCoord2f
 #endif
 
 #define TEXWIDTH 256
