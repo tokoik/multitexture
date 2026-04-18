@@ -59,9 +59,10 @@ if(WIN32)
     endif()
 else()
     if(UNIX AND NOT APPLE)
-        # Ubuntu Linux: pkg-config を使用して freeglut の情報を取得
+        # Ubuntu Linux: pkg-config を使用して freeglut3-dev の情報を取得
+        # ディストリビューションにより .pc 名が freeglut / glut で異なるため両方を試す
         find_package(PkgConfig REQUIRED)
-        pkg_check_modules(FREEGLUT REQUIRED freeglut)
+        pkg_search_module(FREEGLUT REQUIRED freeglut glut)
     else()
         # macOS: 標準付属の GLUT.framework を使用
         find_package(GLUT REQUIRED)

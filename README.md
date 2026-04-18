@@ -132,23 +132,28 @@ cmake --build build --config Release
 
 ```sh
 sudo apt update
-sudo apt install build-essential cmake freeglut3-dev
+sudo apt install build-essential cmake pkg-config freeglut3-dev
 ```
 
 | パッケージ | 説明 |
 | --- | --- |
 | `build-essential` | gcc, make などのビルドツール |
 | `cmake` | CMake ビルドシステム |
+| `pkg-config` | 開発パッケージのビルドオプション取得 |
 | `freeglut3-dev` | freeglut の開発ファイル (ヘッダ・ライブラリ) |
 
 #### 2.4.2 pkg-config について
 
 このプロジェクトの CMakeLists.txt は Linux 環境では `pkg-config` を使って freeglut の情報（ヘッダファイルのパス、リンクするライブラリなど）を自動取得します。
+`freeglut3-dev` は環境によって `freeglut.pc` または `glut.pc` を提供するため、どちらにも対応しています。
 
 ```sh
-# 利用可能な freeglut パッケージの情報を確認（参考）
-pkg-config --cflags --libs freeglut
-# 出力例: -I/usr/include/GL -L/usr/lib/x86_64-linux-gnu -lfreeglut -lGL -lGLU -lm
+# 利用可能なモジュール名を確認（参考）
+pkg-config --exists freeglut && echo "freeglut.pc available" || echo "freeglut.pc not found"
+pkg-config --exists glut && echo "glut.pc available" || echo "glut.pc not found"
+
+# freeglut / glut のどちらかでビルドオプションを確認
+pkg-config --cflags --libs freeglut 2>/dev/null || pkg-config --cflags --libs glut
 ```
 
 #### 2.4.3 ビルド方法
