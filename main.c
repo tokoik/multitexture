@@ -131,11 +131,11 @@ void init(void) {
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   /* テクスチャ１の読み込み */
-  if ((fp = fopen(texFile0, "rb")) == NULL) {
+  if ((fp = fopen(texFile0, "rb")) == NULL
+    || fread(texImage, sizeof texImage, 1, fp) < sizeof texImage) {
     perror(texFile0);
     exit(1);
   }
-  fread(texImage, sizeof texImage, 1, fp);
   fclose(fp);
 
   glGenTextures(1, &texName0);
@@ -149,11 +149,11 @@ void init(void) {
   glBindTexture(GL_TEXTURE_2D, 0);
 
   /* テクスチャ２の読み込み */
-  if ((fp = fopen(texFile1, "rb")) == NULL) {
+  if ((fp = fopen(texFile1, "rb")) == NULL
+    || fread(texImage, sizeof texImage, 1, fp) < sizeof texImage) {
     perror(texFile1);
     exit(1);
   }
-  fread(texImage, sizeof texImage, 1, fp);
   fclose(fp);
 
   glGenTextures(1, &texName1);
