@@ -58,26 +58,53 @@ if(WIN32)
         endif()
     endif()
 else()
-    # macOS や Ubuntu (Linux) ではシステム提供のものを利用
-    # ※ Linux(Ubuntu) 環境では、これにより標準の freeglut (-lglut) が解決されます
-    # ※ macOS では標準付属の GLUT.framework が利用されます
-    find_package(GLUT REQUIRED)
+    if(UNIX AND NOT APPLE)
+        # Ubuntu Linux: pkg-config を使用して freeglut の情報を取得
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(FREEGLUT REQUIRED freeglut)
+    else()
+        # macOS: 標準付属の GLUT.framework を使用
+        find_package(GLUT REQUIRED)
+    endif()
 endif()
 
 # 実行ファイルの定義
 add_executable(${PROJECT_NAME} main.c)
 
-# インクルードパスの設定
-target_include_directories(${PROJECT_NAME} PRIVATE 
-    ${OPENGL_INCLUDE_DIR}
-    ${GLUT_INCLUDE_DIR}
-)
-
-# リンクするライブラリの設定
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    ${OPENGL_LIBRARIES}
-    ${GLUT_LIBRARIES}
-)
+# インクルードパスとライブラリの設定
+if(WIN32)
+    target_include_directories(${PROJECT_NAME} PRIVATE 
+        ${OPENGL_INCLUDE_DIR}
+        ${GLUT_INCLUDE_DIR}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        ${OPENGL_LIBRARIES}
+        ${GLUT_LIBRARIES}
+    )
+elseif(UNIX AND NOT APPLE)
+    # Ubuntu Linux: pkg-config から取得した情報を使用
+    target_include_directories(${PROJECT_NAME} PRIVATE 
+        ${FREEGLUT_INCLUDE_DIRS}
+        ${OPENGL_INCLUDE_DIR}
+    )
+    target_link_directories(${PROJECT_NAME} PRIVATE 
+        ${FREEGLUT_LIBRARY_DIRS}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        ${FREEGLUT_LIBRARIES}
+        ${OPENGL_LIBRARIES}
+    )
+else()
+    # macOS
+    target_include_directories(${PROJECT_NAME} PRIVATE 
+        ${OPENGL_INCLUDE_DIR}
+        ${GLUT_INCLUDE_DIR}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        ${OPENGL_LIBRARIES}
+        ${GLUT_LIBRARIES}
+    )
+endif()
 
 # プラットフォームごとの固有設定
 if(WIN32)
@@ -105,6 +132,9 @@ elseif(UNIX AND NOT APPLE)
     # Ubuntu Linux (Makefile用)
     # Ubuntu では mathライブラリ (libm) の明示的なリンクが必要
     target_link_libraries(${PROJECT_NAME} PRIVATE m)
+    
+    # pkg-config のコンパイラフラグをコンパイルオプションに追加
+    target_compile_options(${PROJECT_NAME} PRIVATE ${FREEGLUT_CFLAGS_OTHER})
 endif()
 
 # Visual Studio のソリューションでこのプロジェクトをデフォルトのスタートアッププロジェクトに設定
