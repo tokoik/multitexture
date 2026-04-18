@@ -72,6 +72,24 @@ endif()
 # 実行ファイルの定義
 add_executable(${PROJECT_NAME} main.c)
 
+# 実行時に main.c から texture*.raw を確実に読み込めるよう、
+# 実行ファイル出力先へテクスチャファイルを自動コピーする
+set(TEXTURE_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/texture0.raw"
+    "${CMAKE_CURRENT_SOURCE_DIR}/texture1.raw"
+)
+
+foreach(TEXTURE_FILE IN LISTS TEXTURE_FILES)
+    if(EXISTS "${TEXTURE_FILE}")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${TEXTURE_FILE}"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            COMMENT "Copying ${TEXTURE_FILE} to output directory"
+        )
+    endif()
+endforeach()
+
 # インクルードパスとライブラリの設定
 if(WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE 

@@ -97,7 +97,8 @@ cmake --build build --config Release
 
 #### 2.2.3 実行
 
-ビルド成功後、`build\Release\multitexture.exe` が生成されます。`texture0.raw` と `texture1.raw` を実行ファイルと同じディレクトリに置いて実行してください。
+ビルド成功後、`build\\Release\\multitexture.exe` が生成されます。
+CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` は自動的に実行ファイル出力先へコピーされるため、そのまま実行できます。
 
 ### 2.3 macOS (Xcode)
 
@@ -124,7 +125,8 @@ cmake --build build --config Release
 
 #### 2.3.3 実行
 
-`build/Release/multitexture` が生成されます。`texture0.raw` と `texture1.raw` を実行ファイルと同じディレクトリに置いて実行してください。
+`build/Release/multitexture` が生成されます。
+CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` は自動的に実行ファイル出力先へコピーされるため、そのまま実行できます。
 
 ### 2.4 Ubuntu Linux (CMake + pkg-config)
 
@@ -174,10 +176,8 @@ cmake --build build
 ```sh
 # ビルド成功後、実行ファイルが生成されます
 build/multitexture
-
-# 別ターミナルから実行する場合は texture*.raw ファイルを同じディレクトリに配置
-cp texture0.raw texture1.raw build/
-./build/multitexture
 ```
 
-> **Note:** `cmake --build build` は内部的に `make` を呼び出しており、その際に pkg-config で取得した CFLAGS・LDFLAGS が自動的に使用されます。
+> **Note 1:** `cmake --build build` は内部的に `make` を呼び出しており、その際に pkg-config で取得した CFLAGS・LDFLAGS が自動的に使用されます。
+>
+> **Note 2:** Linux でも CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` が実行ファイル出力先へ自動コピーされます。
