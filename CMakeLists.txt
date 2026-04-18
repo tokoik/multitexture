@@ -62,7 +62,7 @@ else()
         # Ubuntu Linux: pkg-config を使用して freeglut3-dev の情報を取得
         # ディストリビューションにより .pc 名が freeglut / glut で異なるため両方を試す
         find_package(PkgConfig REQUIRED)
-        pkg_search_module(FREEGLUT REQUIRED freeglut glut)
+        pkg_search_module(FREEGLUT REQUIRED IMPORTED_TARGET freeglut glut)
     else()
         # macOS: 標準付属の GLUT.framework を使用
         find_package(GLUT REQUIRED)
@@ -84,16 +84,13 @@ if(WIN32)
     )
 elseif(UNIX AND NOT APPLE)
     # Ubuntu Linux: pkg-config から取得した情報を使用
-    target_include_directories(${PROJECT_NAME} PRIVATE 
-        ${FREEGLUT_INCLUDE_DIRS}
-        ${OPENGL_INCLUDE_DIR}
-    )
-    target_link_directories(${PROJECT_NAME} PRIVATE 
-        ${FREEGLUT_LIBRARY_DIRS}
-    )
+    target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIR})
+
+    # glActiveTextureARB などのシンボル解決のため OpenGL/GLU を明示リンクする
     target_link_libraries(${PROJECT_NAME} PRIVATE 
-        ${FREEGLUT_LIBRARIES}
-        ${OPENGL_LIBRARIES}
+        PkgConfig::FREEGLUT
+        OpenGL::GL
+        OpenGL::GLU
     )
 else()
     # macOS
@@ -133,9 +130,6 @@ elseif(UNIX AND NOT APPLE)
     # Ubuntu Linux (Makefile用)
     # Ubuntu では mathライブラリ (libm) の明示的なリンクが必要
     target_link_libraries(${PROJECT_NAME} PRIVATE m)
-    
-    # pkg-config のコンパイラフラグをコンパイルオプションに追加
-    target_compile_options(${PROJECT_NAME} PRIVATE ${FREEGLUT_CFLAGS_OTHER})
 endif()
 
 # Visual Studio のソリューションでこのプロジェクトをデフォルトのスタートアッププロジェクトに設定
