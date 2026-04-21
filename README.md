@@ -1,183 +1,153 @@
-# multitexture
+# multitexture サンプルプログラム
 
-OpenGL のマルチテクスチャ機能を使ったサンプルプログラム
+## 1. 概要
 
-## 1. プログラムの説明
+このプログラムは、OpenGL の「マルチテクスチャ機能」の使い方を学ぶための、学生向けのサンプルプログラムです。
 
-### 1.1 マルチテクスチャとは
-
-マルチテクスチャ (Multitexture) とは、1 つのポリゴンに複数のテクスチャを同時に貼り合わせる機能です。OpenGL 1.3 以降では標準仕様として組み込まれていますが、それ以前の環境では `GL_ARB_multitexture` 拡張として提供されていました。本プログラムは `GL_ARB_multitexture` 拡張の API (`glActiveTextureARB`、`glMultiTexCoord2fARB`) を使って実装しています。
-
-### 1.2 テクスチャユニット
-
-マルチテクスチャは **テクスチャユニット** という複数のスロットを持ちます。各ユニットに独立したテクスチャを割り当て、それぞれ異なる合成方法でポリゴンに適用できます。
-
-| ユニット | 定数 | 本プログラムでの役割 |
-| --- | --- | --- |
-| 0 | `GL_TEXTURE0_ARB` | ベーステクスチャ (`texture0.raw`) を `GL_REPLACE` で貼る |
-| 1 | `GL_TEXTURE1_ARB` | 追加テクスチャ (`texture1.raw`) を `GL_MODULATE` で乗算合成する |
-
-### 1.3 主要な API
-
-| 関数 | 説明 |
-| --- | --- |
-| `glActiveTextureARB(unit)` | 操作対象のテクスチャユニットを切り替える |
-| `glMultiTexCoord2fARB(unit, s, t)` | 頂点ごとに各ユニット用のテクスチャ座標を指定する |
-| `glBindTexture(GL_TEXTURE_2D, name)` | アクティブなユニットにテクスチャをバインドする |
-| `glTexEnvi(..., GL_TEXTURE_ENV_MODE, mode)` | テクスチャの合成方法を指定する |
-
-### 1.4 テクスチャの合成順序
-
-各テクスチャユニットは **番号の小さい順** に適用されます。
-
-```text
-最終色 = texName1 × ( texName0 の置換色 )
-         ^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^
-        MODULATE      REPLACE (ベース)
-```
-
-ユニット 0 で `GL_REPLACE` によりポリゴン色をテクスチャ 0 の色に置き換え、ユニット 1 で `GL_MODULATE` によりテクスチャ 1 の色を乗算合成します。
-
-### 1.5 テクスチャファイル
-
-| ファイル | フォーマット | サイズ |
-| --- | --- | --- |
-| `texture0.raw` | 生 RGB (各チャネル 8 bit、ヘッダなし) | 256 × 256 × 3 bytes |
-| `texture1.raw` | 生 RGB (各チャネル 8 bit、ヘッダなし) | 256 × 256 × 3 bytes |
-
-実行ファイルと同じディレクトリに配置してください。
-
-### 1.6 Windows での関数ポインタの取得
-
-Windows (MSVC) 環境では `GL_ARB_multitexture` の関数がリンク時に解決されないため、`wglGetProcAddress` を使って実行時に関数ポインタを取得しています。
-
-```c
-glActiveTextureARB =
-    (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
-glMultiTexCoord2fARB =
-    (PFNGLMULTITEXCOORD2FARBPROC)wglGetProcAddress("glMultiTexCoord2fARB");
-```
-
-macOS・Linux ではこの処理は不要で、関数を直接呼び出せます。
-
-### 1.7 操作方法
-
-| キー | 動作 |
-| --- | --- |
-| `q` / `Q` / `Esc` | プログラムを終了する |
+マルチテクスチャとは、1つのポリゴン（多角形）に対して、複数のテクスチャ画像（模様）を同時に貼り付ける機能のことです。このサンプルでは、2枚の異なるテクスチャ画像（`texture0.raw` と `texture1.raw`）を読み込み、1つの四角形に重ね合わせて描画します。プログラムの処理の詳しい仕組みやアルゴリズムについては、「4. 解説」を参照してください。
 
 ## 2. ビルド方法
 
-### 2.1 共通の前提条件
+このプログラムは CMake を用いてビルドします。ご使用のOS環境に合わせて以下の手順でビルドを行ってください。これらの手順では、中間生成物やコンパイル結果は `.gitignore` の設定に合わせて、すべて `build` ディレクトリに出力するようにします。
 
-CMake 3.18 以降が必要です。
-Windows 向けの `glext.h` および `freeglut` は CMake の設定時に自動ダウンロードされます。
+### Windows (Visual Studio 2022) の場合
 
-### 2.2 Windows (Visual Studio 2022)
+1. コマンドプロンプトを開き、プログラムのソースコードがあるディレクトリに移動します。
 
-#### 2.2.1 必要なもの
+2. 以下のコマンドを実行し、Visual Studio 2022 用のソリューションファイルを生成します。
 
-- Visual Studio 2022 (C++ ワークロードをインストール済み)
-- CMake 3.18 以降 ([cmake.org](https://cmake.org/) または Visual Studio インストーラーで導入)
+   ```cmd
+   cmake -S . -B build -G "Visual Studio 17 2022"
+   ```
 
-#### 2.2.2 手順
+   ※ このとき、必要なライブラリ（freeglut等）のソースコードが自動的にダウンロードされます。
 
-```bat
-:: ソースディレクトリへ移動
-cd multitexture
+3. 以下のコマンドを実行してコンパイル（ビルド）を行います。
+   ```cmd
+   cmake --build build --config Release
+   ```
+   ※ または、生成された `build\multitexture.sln` を Visual Studio 2022 で開き、構成を「Release」に変更してビルドすることも可能です。
 
-:: ビルドディレクトリを作成して Visual Studio 2022 用プロジェクトを生成
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+### macOS (Xcode) の場合
 
-:: コマンドラインでビルドする場合
-cmake --build build --config Release
+1. ターミナルを開き、プログラムのソースコードがあるディレクトリに移動します。
+
+2. 以下のコマンドを実行し、Xcode 用のプロジェクトファイルを生成します。
+
+   ```sh
+   cmake -S . -B build -G Xcode
+   ```
+
+3. 以下のコマンドを実行してビルドを行います。
+
+   ```sh
+   cmake --build build --config Release
+   ```
+
+   ※ 生成された `build/multitexture.xcodeproj` を Xcode で開き、Run（実行）ボタンを押すことで、直接ビルドと実行をまとめて行うこともできます。
+
+### Ubuntu Linux の場合
+
+1. コンパイルに必要なパッケージがインストールされていない場合は、初回のみ以下のコマンドでインストールします。
+
+   ```sh
+   sudo apt update
+   sudo apt install build-essential cmake pkg-config freeglut3-dev
+   ```
+
+2. ターミナルを開き、プログラムのソースコードがあるディレクトリに移動します。
+
+3. 以下のコマンドを実行して Makefile を生成します。
+
+   ```sh
+   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+   ```
+
+4. 以下のコマンドを実行してビルドします。
+
+   ```sh
+   cmake --build build
+   ```
+
+## 3. 使い方
+
+### プログラムの起動方法
+
+**Windows 環境**
+ビルドが成功すると、`build\Release` ディレクトリに実行ファイル `multitexture.exe` が作成されています。実行に必要なライブラリやテクスチャも同ディレクトリに配置されています。
+エクスプローラーから `build\Release\multitexture.exe` を直接ダブルクリックするか、コマンドプロンプトから以下のように実行します。
+
+```cmd
+build\Release\multitexture.exe
 ```
 
-または CMake が生成した `build\multitexture.sln` を Visual Studio 2022 で開き、構成を **Release** にしてビルドしてください。
-
-#### 2.2.3 実行
-
-ビルド成功後、`build\\Release\\multitexture.exe` が生成されます。
-CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` は自動的に実行ファイル出力先へコピーされるため、そのまま実行できます。
-
-### 2.3 macOS (Xcode)
-
-#### 2.3.1 必要なもの
-
-- Xcode (App Store からインストール)
-- Xcode コマンドラインツール (`xcode-select --install`)
-- CMake 3.18 以降 (`brew install cmake` または [cmake.org](https://cmake.org/))
-
-#### 2.3.2 手順
+**macOS 環境**
+ビルドが成功すると、`build/Release` ディレクトリにアプリケーションバンドル `multitexture.app` が作成されています。（テクスチャ画像などはこのバンドルの中に格納されています）
+Finder から `build/Release` フォルダを開き、`multitexture.app` をダブルクリックして起動します。また、ターミナルから以下のようにコマンドを使っても起動できます。
 
 ```sh
-# ソースディレクトリへ移動
-cd multitexture
-
-# Xcode プロジェクトを生成
-cmake -S . -B build -G Xcode
-
-# コマンドラインでビルドする場合
-cmake --build build --config Release
+open build/Release/multitexture.app
 ```
 
-または `build/multitexture.xcodeproj` を Xcode で開いてビルドしてください。
+※ Xcode を使っている場合は、直接 Run ボタンで起動可能です。
 
-#### 2.3.3 実行
-
-`build/Release/multitexture` が生成されます。
-CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` は自動的に実行ファイル出力先へコピーされるため、そのまま実行できます。
-
-### 2.4 Ubuntu Linux (CMake + pkg-config)
-
-#### 2.4.1 必要なもの
+**Ubuntu Linux 環境**
+ビルドが成功すると、`build` ディレクトリに実行ファイル `multitexture` が生成され、テクスチャも同ディレクトリにコピーされています。ターミナルから以下のコマンドで起動します。
 
 ```sh
-sudo apt update
-sudo apt install build-essential cmake pkg-config freeglut3-dev
+./build/multitexture
 ```
 
-| パッケージ | 説明 |
-| --- | --- |
-| `build-essential` | gcc, make などのビルドツール |
-| `cmake` | CMake ビルドシステム |
-| `pkg-config` | 開発パッケージのビルドオプション取得 |
-| `freeglut3-dev` | freeglut の開発ファイル (ヘッダ・ライブラリ) |
+### 使い方の説明
 
-#### 2.4.2 pkg-config について
+プログラムを起動すると新しいウィンドウが開き、画面の少し奥側に1枚の四角形が表示されます。この四角形には2種類の画像のテクスチャが同時に貼り付けられています。
+とくにマウスによる操作はありません。
 
-このプロジェクトの CMakeLists.txt は Linux 環境では `pkg-config` を使って freeglut の情報（ヘッダファイルのパス、リンクするライブラリなど）を自動取得します。
-`freeglut3-dev` は環境によって `freeglut.pc` または `glut.pc` を提供するため、どちらにも対応しています。
+**プログラムの終了方法**
+キーボードの `q` キー、`Q` キー、または `Esc` キーのいずれかを押すとプログラムが終了し、ウィンドウが閉じます。
 
-```sh
-# 利用可能なモジュール名を確認（参考）
-pkg-config --exists freeglut && echo "freeglut.pc available" || echo "freeglut.pc not found"
-pkg-config --exists glut && echo "glut.pc available" || echo "glut.pc not found"
+## 4. 解説
 
-# freeglut / glut のどちらかでビルドオプションを確認
-pkg-config --cflags --libs freeglut 2>/dev/null || pkg-config --cflags --libs glut
+このプログラムの主要な処理の流れとアルゴリズムについて、ソースコード (`main.c`) に沿って解説します。
+
+### 4.1. 拡張機能の準備 (Windows 固有処理)
+
+OpenGL の標準機能だけではマルチテクスチャが使えない環境（代表的な例が Windows 標準の OpenGL インターフェイスです）のために、マクロ `#ifdef _MSC_VER` を使って Windows 固有の処理を追加しています。
+プログラムの開始時に `initMultiTexture()` 関数を呼び出し、OSからマルチテクスチャ操作用の拡張機能（`glActiveTextureARB()` や `glMultiTexCoord2fARB()`）の関数ポインタを動的に取得しています。macOS や Linux ではこのような処理は不要で、最初からこれらの関数が使用可能になっています。
+
+### 4.2. テクスチャ画像データの読み込みと登録 (`init` 関数)
+
+プログラム起動時に一度だけ実行される `init()` 関数内で、描画のための事前準備を行います。
+
+1. **画像の読み込み**: 標準 C ライブラリの `fopen()` と `fread()` を使って、2つの画像ファイル（`texture0.raw` と `texture1.raw`）をメモリに読み込みます。これらのファイルは特別なヘッダを持たない、256×256 ピクセルの RGB RAWデータです。
+
+2. **OpenGL への転送**: 読み込んだデータは `glGenTextures()` と `glTexImage2D()` 命令を通じて、コンピュータのメインメモリからグラフィックスカードのメモリ上へ転送・登録されます。
+
+3. このとき、それぞれのテクスチャには固有の管理番号（`texName0`、`texName1`）が割り当てられ、以降の処理ではこの番号を「画像の名前」として使用します。
+
+### 4.3. テクスチャユニットの設定とブレンド方法 (`display` 関数)
+
+画面の再描画を行う `display()` 関数で、1枚のポリゴンに対して同時に2枚のテクスチャを設定します。マルチテクスチャでは「テクスチャユニット」と呼ばれる複数のスロットを利用します。
+
+- **ユニット 0 番目 (`GL_TEXTURE0_ARB`)**:
+  `glActiveTextureARB()` 関数でユニット0をアクティブ対象に選びます。次に `glBindTexture()` で先ほどの登録番号 `texName0` を割り当てます。合成モード（`GL_TEXTURE_ENV_MODE`）には `GL_REPLACE`（本来の色を無視してテクスチャの色で完全に置き換える）を指定します。
+
+- **ユニット 1 番目 (`GL_TEXTURE1_ARB`)**:
+  同様にユニット1をアクティブにし、`texName1` を割り当てます。合成モードには `GL_MODULATE`（掛け算による合成）を指定します。これによって、1枚目の画像の上に2枚目の画像が掛け算で合成され、結果として混ざった画像が表示されます。
+
+### 4.4. 頂点とテクスチャの対応づけ
+
+四角形（`GL_QUADS`）を描画する処理の中で、ポリゴンの各頂点（`glVertex3d()`）に対して「画像のどの部分を貼り付けるのか」を指定します。
+マルチテクスチャを使う場合は、通常の `glTexCoord2d()` の代わりに `glMultiTexCoord2fARB()` 関数を使用し、「どのユニットに対する座標の指定なのか」を明示します。
+
+```c
+  glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 0.0, 1.0);
+  glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0.0, 1.0);
+  glVertex3d(-1.0, -1.0, 0.0);
 ```
 
-#### 2.4.3 ビルド方法
+このように、ユニット0向けとユニット1向けのテクスチャ座標を両方設定してから、はじめて実際の頂点位置を与えます。本プログラムでは両方のユニットに全く同じ座標 (s, t) を対応させているため、2枚の画像がズレることなくぴったり同じ位置に重なり合います。
 
-```sh
-# ソースディレクトリへ移動
-cd multitexture
+### 4.5. 状態のリセット
 
-# ビルドディレクトリを作成して CMake でプロジェクトを設定
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
-# コマンドラインでビルド
-cmake --build build
-```
-
-#### 2.4.4 実行
-
-```sh
-# ビルド成功後、実行ファイルが生成されます
-build/multitexture
-```
-
-> **Note 1:** `cmake --build build` は内部的に `make` を呼び出しており、その際に pkg-config で取得した CFLAGS・LDFLAGS が自動的に使用されます。
->
-> **Note 2:** Linux でも CMake の `POST_BUILD` 処理で `texture0.raw` と `texture1.raw` が実行ファイル出力先へ自動コピーされます。
+四角形を描き終わった後は、後続のプログラム（画面の他の描画など）に「マルチテクスチャがオンになったまま」という副作用を残さないようにする必要があります。そのため、アクティブにしたテクスチャユニットを `glDisable(GL_TEXTURE_2D)` と `glBindTexture(GL_TEXTURE_2D, 0)` によってそれぞれ無効化（ゼロリセット）し、クリーンな状態に戻して描画処理を終えています。
