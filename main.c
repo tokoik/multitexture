@@ -1,10 +1,19 @@
-﻿#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef _MSC_VER
-#  undef GL_GLEXT_PROTOTYPES
-#  include "glut.h"
-#  include "glext.h"
+﻿#if defined(__APPLE__) || defined(MACOSX)
+#  define GL_SILENCE_DEPRECATION
+#  include <GLUT/glut.h>
+#  include <OpenGL/glext.h>
+#else
+#  if defined(_WIN32)
+#    define _USE_MATH_DEFINES
+#    define _CRT_SECURE_NO_WARNINGS
+#  endif
+#  include <GL/glut.h>
+#  include <GL/glext.h>
+#  if defined(_WIN32)
+#    if !defined(GL_CLAMP_TO_EDGE)
+#      define GL_CLAMP_TO_EDGE 0x812F
+#    endif
+//#    pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 
 /*
 ** GL_ARB_multitexture 用の関数ポインタ
@@ -12,6 +21,9 @@
 PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
 PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
 
+/*
+** GL_ARB_multitexture 用の関数ポインタを取り出す
+*/
 int initMultiTexture(void) {
   glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
   if (!glActiveTextureARB) return 0;
@@ -22,17 +34,14 @@ int initMultiTexture(void) {
   return 1;
 }
 
-#else
-#  if defined(__APPLE__) || defined(MACOSX)
-#    include <GLUT/glut.h>
-#    include <OpenGL/glext.h>
 #  else
-#    include <GL/glut.h>
-#    include <GL/glext.h>
+#    define glActiveTextureARB glActiveTexture
+#    define glMultiTexCoord2fARB glMultiTexCoord2f
 #  endif
-#  define glActiveTextureARB glActiveTexture
-#  define glMultiTexCoord2fARB glMultiTexCoord2f
 #endif
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #define TEXWIDTH 256
 #define TEXHEIGHT 256
@@ -119,7 +128,7 @@ void init(void) {
   FILE *fp;
   static unsigned char texImage[TEXWIDTH * TEXHEIGHT][3];
 
-#ifdef _MSC_VER
+#ifdef _WIN32
   /* GL_ARB_multitexture 用の関数ポインタの初期化 */
   if (!initMultiTexture()) {
     fprintf(stderr, "GL_ARB_multitexture が使用できません\n");
