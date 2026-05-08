@@ -21,7 +21,7 @@ PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
 /*
 ** GL_ARB_multitexture 用の関数ポインタを取り出す
 */
-int initMultiTexture(void) {
+int initMultiTexture() {
   glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
   if (!glActiveTextureARB) return 0;
 
@@ -48,7 +48,7 @@ static char texFile1[] = "texture1.raw";
 
 static GLuint texName0, texName1;
 
-void display(void) {
+void display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glLoadIdentity();
@@ -121,7 +121,7 @@ void keyboard(unsigned char key, int x, int y) {
   }
 }
 
-void init(void) {
+void init() {
   FILE* fp;
   static unsigned char texImage[TEXWIDTH * TEXHEIGHT][3];
 
