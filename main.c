@@ -4,16 +4,13 @@
 #  include <OpenGL/glext.h>
 #else
 #  if defined(_WIN32)
+//#    pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 #    define _USE_MATH_DEFINES
 #    define _CRT_SECURE_NO_WARNINGS
 #  endif
 #  include <GL/glut.h>
 #  include <GL/glext.h>
 #  if defined(_WIN32)
-#    if !defined(GL_CLAMP_TO_EDGE)
-#      define GL_CLAMP_TO_EDGE 0x812F
-#    endif
-//#    pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 
 /*
 ** GL_ARB_multitexture 用の関数ポインタ
@@ -39,9 +36,9 @@ int initMultiTexture(void) {
 #    define glMultiTexCoord2fARB glMultiTexCoord2f
 #  endif
 #endif
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define TEXWIDTH 256
 #define TEXHEIGHT 256
@@ -125,16 +122,8 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 void init(void) {
-  FILE *fp;
+  FILE* fp;
   static unsigned char texImage[TEXWIDTH * TEXHEIGHT][3];
-
-#ifdef _WIN32
-  /* GL_ARB_multitexture 用の関数ポインタの初期化 */
-  if (!initMultiTexture()) {
-    fprintf(stderr, "GL_ARB_multitexture が使用できません\n");
-    exit(1);
-  }
-#endif
 
   /* テクスチャの格納モード */
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -162,7 +151,7 @@ void init(void) {
     perror(texFile1);
     exit(1);
   }
-  fread(texImage, sizeof texImage, 1, fp);  
+  fread(texImage, sizeof texImage, 1, fp);
   fclose(fp);
 
   glGenTextures(1, &texName1);
@@ -181,9 +170,17 @@ void init(void) {
   glEnable(GL_CULL_FACE);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
+
+#ifdef _WIN32
+  /* GL_ARB_multitexture 用の関数ポインタの初期化 */
+  if (!initMultiTexture()) {
+    fprintf(stderr, "GL_ARB_multitexture が使用できません\n");
+    exit(1);
+  }
+#endif
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
   glutCreateWindow(argv[0]);
